@@ -1,0 +1,246 @@
+/* Define theme variables */
+:root {
+  --header-bg-light: #d3d3d3;
+  --header-bg-dark: #1e1e2f;
+  --header-text-light: #000000;
+  --header-text-dark: #ffffff;
+
+  --sidebar-bg-light: #d3d3d3;
+  --sidebar-bg-dark: #2c2c3c;
+  --sidebar-text-light: #333;
+  --sidebar-text-dark: #bbb;
+
+  --content-bg-light: #fafafa;
+  --content-bg-dark: #121212;
+  --content-text-light: #000;
+  --content-text-dark: #eee;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Fixed header */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #1e1e2f;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 1000;
+}
+
+.header .logo {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.header .nav-links a {
+  color: white;
+  text-decoration: none;
+  margin-left: 20px;
+  font-size: 14px;
+  transition: color 0.3s;
+}
+
+.header .nav-links a:hover {
+  color: #00d4ff;
+}
+
+/* Main layout: sidebar + content + footer */
+.main-layout {
+  display: flex;
+  margin-top: 60px;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  position: sticky;
+  top: 0;
+  width: 240px;
+  min-width: 240px;
+  height: 100%;
+  background: #1e1e2f;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 12px 0;
+  border-right: 1px solid #2a2a3d;
+  z-index: 100;
+}
+
+.sidebar a {
+  color: #bbb;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.sidebar a:hover {
+  color: #fff;
+}
+
+/* Content wrapper: scrollable content + sticky footer */
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+/* Content area */
+.content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Fixed footer */
+.footer {
+  height: 40px;
+  min-height: 40px;
+  background: #1e1e2f;
+  color: #8888a8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border-top: 1px solid #2a2a3d;
+  flex-shrink: 0;
+}
+
+
+
+/* Light theme */
+.app.light .header {
+  background: var(--header-bg-light);
+  color: var(--header-text-light);
+}
+.app.light .header .nav-links a {
+  color: var(--header-text-light);
+}
+.app.light .sidebar {
+  background: var(--sidebar-bg-light);
+  border-right-color: #e0e0e8;
+}
+.app.light .sidebar a {
+  color: var(--sidebar-text-light);
+}
+.app.light .content {
+  background: var(--content-bg-light);
+  color: var(--content-text-light);
+}
+.app.light .footer {
+  background: var(--header-bg-light);
+  color: #666;
+  border-top-color: #ccc;
+}
+
+/* Dark theme */
+.app.dark .header {
+  background: var(--header-bg-dark);
+  color: var(--header-text-dark);
+}
+.app.dark .header .nav-links a {
+  color: var(--header-text-dark);
+}
+.app.dark .sidebar {
+  background: var(--sidebar-bg-dark);
+}
+.app.dark .sidebar a {
+  color: var(--sidebar-text-dark);
+}
+.app.dark .content {
+  background: var(--content-bg-dark);
+  color: var(--content-text-dark);
+}
+.app.dark .footer {
+  background: var(--header-bg-dark);
+  color: #6a6a8a;
+  border-top-color: #2a2a3d;
+}
+.theme-toggle {
+  cursor: pointer;
+  margin-left: 20px;
+  font-size: 20px;
+  transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover {
+  transform: rotate(20deg) scale(1.2);
+}
+
+.auth-status-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #f5f5f5, #e7edf4);
+}
+
+.auth-card {
+  width: min(520px, calc(100vw - 40px));
+  background: #ffffff;
+  border: 1px solid #dbe3ee;
+  border-radius: 14px;
+  padding: 28px 24px;
+  box-shadow: 0 14px 30px rgba(17, 34, 68, 0.1);
+  text-align: center;
+}
+
+.auth-card-error {
+  border-color: #f1b6c2;
+  background: #fff8fa;
+}
+
+.auth-spinner {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 14px;
+  border: 4px solid #d9e6f4;
+  border-top-color: #0d6efd;
+  border-radius: 50%;
+  animation: spin 900ms linear infinite;
+}
+
+.auth-message {
+  margin: 0;
+  color: #1b3555;
+  font-weight: 500;
+}
+
+.auth-hint {
+  margin: 10px 0 0;
+  color: #5a6d84;
+}
+
+.auth-retry {
+  margin-top: 18px;
+  border: 0;
+  background: #0d6efd;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-retry:hover {
+  background: #0059d6;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

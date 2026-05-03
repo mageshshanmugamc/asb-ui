@@ -1,0 +1,48 @@
+import { Observable, from, defer } from "rxjs";
+import { switchMap } from "rxjs/operators";
+import { userManager } from "../auth/oidc";
+
+const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000/api/v1";
+
+function getAuthHeaders(): HeadersInit {
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  const appToken = sessionStorage.getItem("app_token");
+  if (appToken) {
+    headers["Authorization"] = `Bearer ${appToken}`;
+  }
+  return headers;
+}
+
+function request$<T>(path: string, init?: RequestInit): Observable<T> {
+  return defer(() =>
+    from(
+      fetch(`${API_BASE}${path}`, {
+        ...init,
+        headers: { ...getAuthHeaders(), ...init?.headers },
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error(`API error ${response.status}: ${response.statusText}`);
+        }
+        return response.json() as Promise<T>;
+      })
+    )
+  );
+}
+
+export const apiService = {
+  get$<T>(path: string): Observable<T> {
+    return request$<T>(path, { method: "GET" });
+  },
+
+  post$<T>(path: string, body: unknown): Observable<T> {
+    return request$<T>(path, { method: "POST", body: JSON.stringify(body) });
+  },
+
+  put$<T>(path: string, body: unknown): Observable<T> {
+    return request$<T>(path, { method: "PUT", body: JSON.stringify(body) });
+  },
+
+  delete$<T>(path: string): Observable<T> {
+    return request$<T>(path, { method: "DELETE" });
+  },
+};

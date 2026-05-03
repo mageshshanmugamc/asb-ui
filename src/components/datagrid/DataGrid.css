@@ -1,0 +1,157 @@
+.datagrid-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  gap: 8px;
+}
+
+/* Toolbar: count left, search right */
+.datagrid-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2px;
+}
+
+.datagrid-count {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.datagrid-search {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  width: 220px;
+}
+
+.app.dark .datagrid-search {
+  background: #2c2c3c;
+  color: #fff;
+  border-color: #555;
+}
+
+/* Table wrapper for scroll */
+.datagrid-table-wrapper {
+  flex: 1;
+  overflow: auto;
+}
+
+/* Table */
+.datagrid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.app.light .datagrid,
+.app.light .datagrid th,
+.app.light .datagrid td {
+  border: 1px solid #e0e0e0;
+}
+
+.app.dark .datagrid,
+.app.dark .datagrid th,
+.app.dark .datagrid td {
+  border: 1px solid #444;
+}
+
+.datagrid th,
+.datagrid td {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+/* Column width classes */
+.col-id { width: 60px; }
+.col-sm { width: 100px; }
+.col-md { width: 160px; }
+.col-lg { width: 240px; }
+
+/* Header */
+.datagrid th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  user-select: none;
+}
+
+.datagrid th.sortable {
+  cursor: pointer;
+}
+
+.datagrid th.sortable:hover {
+  background-color: #e9ecef;
+}
+
+.sort-icon {
+  font-size: 0.7rem;
+  margin-left: 4px;
+}
+
+.app.dark .datagrid th {
+  background-color: #2c2c3c;
+  color: #fff;
+}
+
+.app.dark .datagrid th.sortable:hover {
+  background-color: #3a3a4a;
+}
+
+/* Row striping */
+.datagrid tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.app.dark .datagrid tbody tr:nth-child(even) {
+  background-color: #1e1e2e;
+}
+
+.datagrid tbody tr:hover {
+  background-color: #e8f0fe;
+}
+
+.app.dark .datagrid tbody tr:hover {
+  background-color: #333348;
+}
+
+/* Status / empty / loading cell */
+.datagrid-status {
+  text-align: center;
+  padding: 24px;
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* Pagination */
+.datagrid-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 0.85rem;
+}
+
+.datagrid-pagination button {
+  padding: 4px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.datagrid-pagination button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.app.dark .datagrid-pagination button {
+  border-color: #555;
+  color: #ccc;
+}

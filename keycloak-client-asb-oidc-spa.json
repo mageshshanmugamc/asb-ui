@@ -1,0 +1,42 @@
+{
+  "clientId": "asb-oidc",
+  "name": "ASB OIDC SPA",
+  "description": "Public SPA client for React app",
+  "rootUrl": "http://localhost:3001",
+  "baseUrl": "http://localhost:3001",
+  "enabled": true,
+  "publicClient": true,
+  "clientAuthenticatorType": "none",
+  "bearerOnly": false,
+  "consentRequired": false,
+  "standardFlowEnabled": true,
+  "implicitFlowEnabled": false,
+  "directAccessGrantsEnabled": false,
+  "serviceAccountsEnabled": false,
+  "authorizationServicesEnabled": false,
+  "protocol": "openid-connect",
+  "redirectUris": [
+    "http://localhost:3001/*",
+    "http://127.0.0.1:3001/*"
+  ],
+  "webOrigins": [
+    "http://localhost:3001",
+    "http://127.0.0.1:3001"
+  ],
+  "attributes": {
+    "post.logout.redirect.uris": "http://localhost:3001/*##http://127.0.0.1:3001/*"
+  },
+  "defaultClientScopes": [
+    "web-origins",
+    "acr",
+    "roles",
+    "profile",
+    "email"
+  ],
+  "optionalClientScopes": [
+    "address",
+    "phone",
+    "offline_access",
+    "microprofile-jwt"
+  ]
+}

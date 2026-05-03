@@ -1,0 +1,45 @@
+.header {
+  background: #1e1e2f;
+  color: white;
+  padding: 0 20px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header .logo {
+  font-weight: 700;
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.header .nav-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header .nav-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s;
+}
+
+.header .nav-links a:hover {
+  color: #00d4ff;
+}
+
+.header .theme-toggle {
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+}
+
+.header .theme-toggle:hover {
+  transform: rotate(20deg) scale(1.2);
+}
