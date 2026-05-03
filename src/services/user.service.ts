@@ -1,21 +1,19 @@
 import { apiService } from "./api";
+import { UserGroupModel } from "./usergroup.service";
+
+export type { UserGroupModel };
 
 export interface UserModel {
   id: number;
   username: string;
   email: string;
-  userGroupId: number | null;
-}
-
-export interface UserGroupModel {
-  id: number;
-  groupName: string;
+  userGroupIds: number[];
 }
 
 export interface CreateUserPayload {
   username: string;
   email: string;
-  userGroupId: number | null;
+  userGroupIds: number[];
 }
 
 export interface KeycloakLookupResult {

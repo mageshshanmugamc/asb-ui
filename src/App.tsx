@@ -4,6 +4,9 @@ import Header from "./components/header/Header"
 import Sidebar from "./components/sidebar/Sidebar";
 import Dashboard from "./components/pages/dashboards/Dashboards";
 import UserManagement from "./components/pages/users/UserManagement";
+import UserGroupManagement from "./components/pages/usergroups/UserGroupManagement";
+import RoleManagement from "./components/pages/roles/RoleManagement";
+import PolicyManagement from "./components/pages/policies/PolicyManagement";
 import Reports from "./components/pages/reports/Reports";
 import Settings from "./components/pages/settings/Settings";
 import "./App.css";
@@ -51,6 +54,9 @@ const GuardedRoutes: React.FC<{ user: User }> = ({ user }) => {
       <Route path="/" element={<Dashboard user={user} />} />
       <Route path="/dashboard" element={<Dashboard user={user} />} />
       <Route path="/users" element={<UserManagement />} />
+      <Route path="/users/groups" element={<UserGroupManagement />} />
+      <Route path="/users/roles" element={<RoleManagement />} />
+      <Route path="/users/policies" element={<PolicyManagement />} />
       <Route path="/users/*" element={<UserManagement />} />
       <Route path="/reports" element={<Reports />} />
       <Route path="/reports/*" element={<Reports />} />

@@ -17,6 +17,7 @@ const iconMap: Record<string, string> = {
   security: "🔒",
   tune: "🎛️",
   lock: "🔑",
+  policy: "📜",
 };
 
 const MenuItem: React.FC<{ menu: MenuModel; depth?: number }> = ({ menu, depth = 0 }) => {

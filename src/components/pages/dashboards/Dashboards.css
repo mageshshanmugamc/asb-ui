@@ -134,9 +134,9 @@
 .modal-content {
   background: #1e1e2f;
   border-radius: 10px;
-  width: 420px;
-  max-width: 90vw;
-  max-height: 85vh;
+  width: 720px;
+  max-width: 150vw;
+  max-height: 120vh;
   overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }

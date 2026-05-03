@@ -1,0 +1,27 @@
+/* UserGroupManagement-specific styles */
+.actions-cell {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-action {
+  padding: 4px 12px;
+  font-size: 0.8rem;
+}
+
+.btn-delete {
+  color: #e57373;
+  border-color: #e57373;
+}
+
+.btn-danger {
+  background: #d32f2f;
+}
+
+.btn-danger:hover {
+  background: #b71c1c;
+}
+
+.delete-message {
+  margin: 0;
+}

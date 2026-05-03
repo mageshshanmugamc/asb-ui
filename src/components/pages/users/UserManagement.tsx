@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { forkJoin } from "rxjs";
 import DataGrid, { Column } from "../../datagrid/DataGrid";
+import MultiSelect from "../../multiselect/MultiSelect";
 import { userService, UserGroupModel } from "../../../services/user.service";
 import "../dashboards/Dashboards.css";
 
@@ -8,14 +9,14 @@ interface UserRow {
   id: number;
   username: string;
   email: string;
-  userGroupName: string;
+  userGroupNames: string;
 }
 
 const columns: Column<UserRow>[] = [
   { key: "id", label: "ID", widthClass: "col-id" },
   { key: "username", label: "Username", widthClass: "col-md" },
   { key: "email", label: "Email", widthClass: "col-lg" },
-  { key: "userGroupName", label: "Group", widthClass: "col-md" },
+  { key: "userGroupNames", label: "Groups", widthClass: "col-md" },
 ];
 
 const UserManagement: React.FC = () => {
@@ -26,7 +27,8 @@ const UserManagement: React.FC = () => {
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ username: "", email: "", userGroupId: "" });
+  const [formData, setFormData] = useState({ username: "", email: "" });
+  const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -43,7 +45,9 @@ const UserManagement: React.FC = () => {
           id: u.id,
           username: u.username,
           email: u.email,
-          userGroupName: u.userGroupId != null ? gMap.get(u.userGroupId) ?? "—" : "—",
+          userGroupNames: u.userGroupIds.length > 0
+            ? u.userGroupIds.map((gid) => gMap.get(gid) ?? String(gid)).join(", ")
+            : "—",
         }));
         setUsers(rows);
         setLoading(false);
@@ -62,7 +66,8 @@ const UserManagement: React.FC = () => {
   }, []);
 
   const handleOpenModal = () => {
-    setFormData({ username: "", email: "", userGroupId: "" });
+    setFormData({ username: "", email: "" });
+    setSelectedGroupIds([]);
     setSubmitError(null);
     setShowModal(true);
   };
@@ -83,7 +88,7 @@ const UserManagement: React.FC = () => {
     const payload = {
       username: formData.username,
       email: formData.email,
-      userGroupId: formData.userGroupId ? Number(formData.userGroupId) : null,
+      userGroupIds: selectedGroupIds,
     };
 
     userService.create$(payload).subscribe({
@@ -148,18 +153,13 @@ const UserManagement: React.FC = () => {
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="userGroupId">User Group</label>
-                <select
-                  id="userGroupId"
-                  name="userGroupId"
-                  value={formData.userGroupId}
-                  onChange={handleChange}
-                >
-                  <option value="">-- Select Group --</option>
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>{g.groupName}</option>
-                  ))}
-                </select>
+                <label>User Groups</label>
+                <MultiSelect
+                  options={groups.map((g) => ({ value: g.id, label: g.groupName }))}
+                  selected={selectedGroupIds}
+                  onChange={(vals) => setSelectedGroupIds(vals as number[])}
+                  placeholder="Select groups..."
+                />
               </div>
               {submitError && <p className="page-error">{submitError}</p>}
               <div className="modal-footer">

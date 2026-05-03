@@ -47,6 +47,9 @@ export const authService = {
               },
               body: body.toString(),
             }).then((response) => {
+              if (response.status === 404) {
+                throw new Error("You don't have access. Please contact administrator.");
+              }
               if (!response.ok) {
                 throw new Error(`Token exchange failed: ${response.status}`);
               }
