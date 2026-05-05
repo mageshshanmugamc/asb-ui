@@ -21,6 +21,24 @@ export interface AppTokenResponse {
   menus: MenuModel[];
 }
 
+interface TokenApiResponse {
+  access_token: string;
+  token_type: string;
+  expires_at: string;
+}
+
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  const base64Url = token.split(".")[1];
+  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+  const jsonPayload = decodeURIComponent(
+    atob(base64)
+      .split("")
+      .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+      .join("")
+  );
+  return JSON.parse(jsonPayload);
+}
+
 export const authService = {
   /**
    * Exchange the Keycloak token for an app token.
@@ -36,7 +54,7 @@ export const authService = {
 
           const body = new URLSearchParams();
           body.append("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange");
-          body.append("subject_token", user.access_token); // <-- add this line
+          body.append("subject_token", user.access_token);
 
           return from(
             fetch(`${API_BASE}/Auth/token`, {
@@ -53,7 +71,25 @@ export const authService = {
               if (!response.ok) {
                 throw new Error(`Token exchange failed: ${response.status}`);
               }
-              return response.json() as Promise<AppTokenResponse>;
+              return response.json() as Promise<TokenApiResponse>;
+            }).then((data) => {
+              const payload = decodeJwtPayload(data.access_token);
+
+              const menus: MenuModel[] = payload.menus
+                ? JSON.parse(payload.menus as string)
+                : [];
+
+              const roles: string[] = payload.roles
+                ? (payload.roles as string).split(",").map((r) => r.trim())
+                : [];
+
+              return {
+                access_token: data.access_token,
+                token_type: data.token_type,
+                expires_at: data.expires_at,
+                roles,
+                menus,
+              } as AppTokenResponse;
             })
           );
         })
