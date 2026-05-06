@@ -14,6 +14,7 @@ import "./App.css";
 import { initAuth } from "./auth/oidc";
 import { User } from "oidc-client-ts";
 import { AppAuthProvider, useAppAuth } from "./auth/AppAuthContext";
+import ChatBot from "./components/chatbot/ChatBot";
 
 type AuthStatus = "loading" | "authenticated" | "error";
 
@@ -146,6 +147,7 @@ const App: React.FC = () => {
               </footer>
             </div>
           </div>
+          <ChatBot />
         </div>
       </AppAuthProvider>
     </BrowserRouter>
