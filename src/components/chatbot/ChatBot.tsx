@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import "./ChatBot.css";
 import { apiService } from "../../services/api";
 import { firstValueFrom } from "rxjs";
+import LoadingSpinner from "../loading-spinner/LoadingSpinner";
 
 interface Message {
   id: number;
@@ -124,9 +125,7 @@ const ChatBot: React.FC = () => {
             {isTyping && (
               <div className="chatbot-message bot">
                 <div className="chatbot-bubble typing">
-                  <span className="dot" />
-                  <span className="dot" />
-                  <span className="dot" />
+                  <LoadingSpinner size={24} color="#4f46e5" />
                 </div>
               </div>
             )}

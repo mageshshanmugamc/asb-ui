@@ -1,8 +1,9 @@
 import { Observable, from, defer } from "rxjs";
-import { map, switchMap } from "rxjs/operators";
+import { switchMap } from "rxjs/operators";
 import { userManager } from "../auth/oidc";
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000/api/v1";
+const API_BASE = (window as any).__ENV__?.REACT_APP_BASE_URL  || "http://localhost:5000";
+const API_VERSION = (window as any).__ENV__?.BACKEND_API_VERSION ||  "/api/v1";
 
 export interface MenuModel {
   id: number;
@@ -57,7 +58,7 @@ export const authService = {
           body.append("subject_token", user.access_token);
 
           return from(
-            fetch(`${API_BASE}/Auth/token`, {
+            fetch(`${API_BASE}${API_VERSION}/Auth/token`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/x-www-form-urlencoded",

@@ -2,7 +2,8 @@ import { Observable, from, defer } from "rxjs";
 import { switchMap } from "rxjs/operators";
 import { userManager } from "../auth/oidc";
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000/api/v1";
+const BASE_URL = (window as any).__ENV__?.REACT_APP_BASE_URL || "http://localhost:5000";
+const API_BASE = `${BASE_URL}/api/v1`;
 
 function getAuthHeaders(): HeadersInit {
   const headers: HeadersInit = { "Content-Type": "application/json" };

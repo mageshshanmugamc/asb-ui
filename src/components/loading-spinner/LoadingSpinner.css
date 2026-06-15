@@ -1,0 +1,26 @@
+.loading-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Faint track ring */
+.spinner-track {
+  stroke: rgba(156, 163, 175, 0.25);
+}
+
+.app.dark .spinner-track {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+/* Animated arc */
+.spinner-head {
+  transform-origin: center;
+  animation: spinner-rotate 0.85s linear infinite;
+}
+
+@keyframes spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
