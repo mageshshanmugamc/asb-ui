@@ -1,6 +1,6 @@
 import { UserManager, WebStorageStateStore, User } from "oidc-client-ts";
 
-const BASE_URL = (window as any).__ENV__?.REACT_APP_BASE_URL || "http://172.17.14.41:5000";
+const BASE_URL = (window as any).__ENV__?.REACT_APP_BASE_URL || "https://magesh.com";
 const AUTHORITY = `${BASE_URL}/keycloak/realms/asb-keycloak`;
 const CLIENT_ID = "asb-oidc-provider";
 const REDIRECT_URI = window.location.origin + "/";

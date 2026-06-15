@@ -8,6 +8,7 @@ import UserGroupManagement from "./components/pages/usergroups/UserGroupManageme
 import RoleManagement from "./components/pages/roles/RoleManagement";
 import PolicyManagement from "./components/pages/policies/PolicyManagement";
 import MenuManagement from "./components/pages/menus/MenuManagement";
+import Country from "./components/pages/countries/Country";
 import Reports from "./components/pages/reports/Reports";
 import Settings from "./components/pages/settings/Settings";
 import "./App.css";
@@ -60,6 +61,8 @@ const GuardedRoutes: React.FC<{ user: User }> = ({ user }) => {
       <Route path="/users/roles" element={<RoleManagement />} />
       <Route path="/users/policies" element={<PolicyManagement />} />
       <Route path="/settings/menus" element={<MenuManagement />} />
+      <Route path="/settings/countries" element={<Country />} />
+      <Route path="/settings/country" element={<Country />} />
       <Route path="/users/*" element={<UserManagement />} />
       <Route path="/reports" element={<Reports />} />
       <Route path="/reports/*" element={<Reports />} />
