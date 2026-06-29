@@ -2,7 +2,7 @@ import { Observable, from, defer } from "rxjs";
 import { switchMap } from "rxjs/operators";
 import { userManager } from "../auth/oidc";
 
-const API_BASE = (window as any).__ENV__?.REACT_APP_BASE_URL  || "http://localhost:5000";
+const API_BASE = (window as any).__ENV__?.REACT_APP_BASE_URL  || "http://localhost:5057";
 const API_VERSION = (window as any).__ENV__?.BACKEND_API_VERSION ||  "/api/v1";
 
 export interface MenuModel {

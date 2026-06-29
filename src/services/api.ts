@@ -2,7 +2,7 @@ import { Observable, from, defer } from "rxjs";
 import { switchMap } from "rxjs/operators";
 import { userManager } from "../auth/oidc";
 
-const BASE_URL = (window as any).__ENV__?.REACT_APP_BASE_URL || "http://localhost:5000";
+const BASE_URL = (window as any).__ENV__?.REACT_APP_BASE_URL || "http://localhost:5057";
 const API_BASE = `${BASE_URL}/api/v1`;
 
 function getAuthHeaders(): HeadersInit {

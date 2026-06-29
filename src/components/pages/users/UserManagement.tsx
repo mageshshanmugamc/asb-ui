@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { forkJoin } from "rxjs";
-import DataGrid, { Column } from "../../datagrid/DataGrid";
+import * as signalR from "@microsoft/signalr";
+import DataGrid, { Column, ServerQueryParams } from "../../datagrid/DataGrid";
 import MultiSelect from "../../multiselect/MultiSelect";
 import { userService, UserGroupModel } from "../../../services/user.service";
 import "../dashboards/Dashboards.css";
+
+const BASE_URL = (window as any).__ENV__?.REACT_APP_BASE_URL || "http://localhost:5057";
 
 interface UserRow {
   id: number;
@@ -13,14 +16,15 @@ interface UserRow {
 }
 
 const columns: Column<UserRow>[] = [
-  { key: "id", label: "ID", widthClass: "col-id" },
-  { key: "username", label: "Username", widthClass: "col-md" },
-  { key: "email", label: "Email", widthClass: "col-lg" },
-  { key: "userGroupNames", label: "Groups", widthClass: "col-md" },
+  { key: "id", label: "ID", widthClass: "col-id", sortKey: "Id" },
+  { key: "username", label: "Username", widthClass: "col-md", sortKey: "Username" },
+  { key: "email", label: "Email", widthClass: "col-lg", sortKey: "Email" },
+  { key: "userGroupNames", label: "Groups", widthClass: "col-md", sortable: false },
 ];
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [groups, setGroups] = useState<UserGroupModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,17 +35,24 @@ const UserManagement: React.FC = () => {
   const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set());
 
-  const loadUsers = () => {
+  // Track current query params for reloading
+  const queryRef = useRef<ServerQueryParams>({ skip: 0, take: 10 });
+
+  const loadUsers = useCallback((params?: ServerQueryParams) => {
+    const q = params ?? queryRef.current;
+    queryRef.current = q;
     setLoading(true);
     const subscription = forkJoin({
-      users: userService.getAll$(),
+      usersPage: userService.getAll$(q),
       groups: userService.getGroups$(),
     }).subscribe({
-      next: ({ users, groups }) => {
+      next: ({ usersPage, groups }) => {
         const gMap = new Map(groups.map((g) => [g.id, g.groupName]));
         setGroups(groups);
-        const rows: UserRow[] = users.map((u) => ({
+        setTotalCount(usersPage.totalCount);
+        const rows: UserRow[] = usersPage.items.map((u) => ({
           id: u.id,
           username: u.username,
           email: u.email,
@@ -58,12 +69,80 @@ const UserManagement: React.FC = () => {
       },
     });
     return subscription;
-  };
+  }, []);
 
+  // Initial data load
   useEffect(() => {
     const sub = loadUsers();
     return () => sub.unsubscribe();
-  }, []);
+  }, [loadUsers]);
+
+  const handleQueryChange = useCallback((params: ServerQueryParams) => {
+    loadUsers(params);
+  }, [loadUsers]);
+
+  // SignalR connection: listen for real-time "UserCreated" events
+  const connectionRef = useRef<signalR.HubConnection | null>(null);
+  const existingIdsRef = useRef<Set<number>>(new Set());
+
+  // Keep track of current user IDs for diffing on SignalR events
+  useEffect(() => {
+    existingIdsRef.current = new Set(users.map((u) => u.id));
+  }, [users]);
+
+  useEffect(() => {
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(`${BASE_URL}/hubs/notifications`)
+      .build();
+
+    connectionRef.current = connection;
+
+    connection.on("UserCreated", (notification: { message: string }) => {
+      console.log(notification.message);
+      const previousIds = new Set(existingIdsRef.current);
+      // Reload current page and highlight the new ones
+      const q = queryRef.current;
+      forkJoin({
+        usersPage: userService.getAll$(q),
+        groups: userService.getGroups$(),
+      }).subscribe({
+        next: ({ usersPage, groups: freshGroups }) => {
+          const gMap = new Map(freshGroups.map((g) => [g.id, g.groupName]));
+          setGroups(freshGroups);
+          setTotalCount(usersPage.totalCount);
+          const rows: UserRow[] = usersPage.items.map((u) => ({
+            id: u.id,
+            username: u.username,
+            email: u.email,
+            userGroupNames: u.userGroupIds.length > 0
+              ? u.userGroupIds.map((gid) => gMap.get(gid) ?? String(gid)).join(", ")
+              : "—",
+          }));
+          setUsers(rows);
+
+          // Find newly added IDs
+          const newIds = usersPage.items
+            .map((u) => u.id)
+            .filter((id) => !previousIds.has(id));
+
+          if (newIds.length > 0) {
+            setHighlightedIds(new Set(newIds));
+            setTimeout(() => setHighlightedIds(new Set()), 3000);
+          }
+        },
+      });
+    });
+
+    connection.start().catch((err) =>
+      console.error("SignalR connection failed:", err)
+    );
+
+    return () => {
+      if (connection.state === signalR.HubConnectionState.Connected) {
+        connection.stop();
+      }
+    };
+  }, [loadUsers]);
 
   const handleOpenModal = () => {
     setFormData({ username: "", email: "" });
@@ -117,6 +196,9 @@ const UserManagement: React.FC = () => {
         loading={loading}
         emptyMessage="No users found."
         pageSize={10}
+        totalCount={totalCount}
+        onQueryChange={handleQueryChange}
+        rowClassName={(row) => highlightedIds.has(row.id) ? "row-new" : undefined}
       />
 
       {showModal && (

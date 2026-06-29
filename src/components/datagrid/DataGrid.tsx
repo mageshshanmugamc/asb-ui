@@ -7,6 +7,14 @@ export interface Column<T = any> {
   widthClass?: string;
   render?: (value: any, row: T) => React.ReactNode;
   sortable?: boolean;
+  sortKey?: string; // server-side sort key if different from `key` (e.g. "Id" vs "id")
+}
+
+export interface ServerQueryParams {
+  skip: number;
+  take: number;
+  sortBy?: string;
+  isDescending?: boolean;
 }
 
 interface DataGridProps<T = any> {
@@ -15,6 +23,10 @@ interface DataGridProps<T = any> {
   loading?: boolean;
   emptyMessage?: string;
   pageSize?: number;
+  rowClassName?: (row: T) => string | undefined;
+  // Server-side pagination/sorting (opt-in)
+  totalCount?: number;
+  onQueryChange?: (params: ServerQueryParams) => void;
 }
 
 function DataGrid<T extends Record<string, any>>({
@@ -23,7 +35,12 @@ function DataGrid<T extends Record<string, any>>({
   loading = false,
   emptyMessage = "No data found.",
   pageSize = 10,
+  rowClassName,
+  totalCount,
+  onQueryChange,
 }: DataGridProps<T>) {
+  const isServerSide = typeof totalCount === "number" && !!onQueryChange;
+
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,20 +50,32 @@ function DataGrid<T extends Record<string, any>>({
     setCurrentPage(1);
   }, [searchTerm]);
 
-  // Filter
+  // Notify parent when page or sort changes (server-side mode)
+  useEffect(() => {
+    if (!isServerSide) return;
+    const col = sortConfig ? columns.find((c) => c.key === sortConfig.key) : undefined;
+    onQueryChange({
+      skip: (currentPage - 1) * pageSize,
+      take: pageSize,
+      sortBy: col ? (col.sortKey ?? sortConfig!.key) : undefined,
+      isDescending: sortConfig ? sortConfig.direction === "desc" : undefined,
+    });
+  }, [currentPage, sortConfig, pageSize]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Client-side filter
   const filtered = useMemo(() => {
-    if (!searchTerm) return data;
+    if (isServerSide || !searchTerm) return data;
     const lower = searchTerm.toLowerCase();
     return data.filter((row) =>
       columns.some((col) =>
         String(row[col.key] ?? "").toLowerCase().includes(lower)
       )
     );
-  }, [searchTerm, data, columns]);
+  }, [searchTerm, data, columns, isServerSide]);
 
-  // Sort
+  // Client-side sort
   const sorted = useMemo(() => {
-    if (!sortConfig) return filtered;
+    if (isServerSide || !sortConfig) return filtered;
     return [...filtered].sort((a, b) => {
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
@@ -56,11 +85,13 @@ function DataGrid<T extends Record<string, any>>({
       if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
       return 0;
     });
-  }, [filtered, sortConfig]);
+  }, [filtered, sortConfig, isServerSide]);
 
   // Paginate
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const paginated = sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const serverTotalPages = isServerSide ? Math.max(1, Math.ceil(totalCount / pageSize)) : 0;
+  const totalPages = isServerSide ? serverTotalPages : Math.max(1, Math.ceil(sorted.length / pageSize));
+  const paginated = isServerSide ? data : sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const recordCount = isServerSide ? totalCount : filtered.length;
 
   const handleSort = (key: string) => {
     setSortConfig((prev) => {
@@ -73,7 +104,7 @@ function DataGrid<T extends Record<string, any>>({
     <div className="datagrid-container">
       {/* Toolbar */}
       <div className="datagrid-toolbar">
-        <span className="datagrid-count">{filtered.length} record{filtered.length !== 1 ? "s" : ""}</span>
+        <span className="datagrid-count">{recordCount} record{recordCount !== 1 ? "s" : ""}</span>
         <input
           type="text"
           className="datagrid-search"
@@ -116,7 +147,7 @@ function DataGrid<T extends Record<string, any>>({
               </tr>
             ) : (
               paginated.map((row, idx) => (
-                <tr key={idx}>
+                <tr key={idx} className={rowClassName?.(row) || undefined}>
                   {columns.map((col) => (
                     <td key={col.key} className={col.widthClass}>
                       {col.render ? col.render(row[col.key], row) : String(row[col.key] ?? "")}

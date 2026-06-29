@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import "./ChatBot.css";
 import { apiService } from "../../services/api";
 import { firstValueFrom } from "rxjs";
+import { userManager } from "../../auth/oidc";
 import LoadingSpinner from "../loading-spinner/LoadingSpinner";
 
 interface Message {
@@ -12,7 +14,7 @@ interface Message {
 }
 
 interface ChatResponse {
-  message: string;
+  response: string;
   conversationId: string;
 }
 
@@ -58,10 +60,12 @@ const ChatBot: React.FC = () => {
     setIsTyping(true);
 
     try {
+      const user = await userManager.getUser();
       const response = await firstValueFrom(
         apiService.post$<ChatResponse>("/Agent/chat", {
           message: trimmed,
           conversationId: conversationId,
+          userId: user?.profile?.email || "",
         })
       );
 
@@ -71,7 +75,7 @@ const ChatBot: React.FC = () => {
 
       const botMessage: Message = {
         id: Date.now() + 1,
-        text: response.message,
+        text: response.response,
         sender: "bot",
         timestamp: new Date(),
       };
@@ -118,7 +122,13 @@ const ChatBot: React.FC = () => {
                 key={msg.id}
                 className={`chatbot-message ${msg.sender === "user" ? "user" : "bot"}`}
               >
-                <div className="chatbot-bubble">{msg.text}</div>
+                <div className="chatbot-bubble">
+                  {msg.sender === "bot" ? (
+                    <ReactMarkdown>{msg.text}</ReactMarkdown>
+                  ) : (
+                    msg.text
+                  )}
+                </div>
                 <span className="chatbot-time">{formatTime(msg.timestamp)}</span>
               </div>
             ))}
