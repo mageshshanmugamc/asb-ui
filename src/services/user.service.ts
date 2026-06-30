@@ -44,6 +44,7 @@ export const userService = {
   },
   getGroups$: () => apiService.get$<UserGroupModel[]>("/UserGroup"),
   create$: (payload: CreateUserPayload) => apiService.post$<UserModel>("/User", payload),
+  delete$: (id: number) => apiService.delete$<void>(`/User/${id}`),
   lookupKeycloakUser$: (email: string) =>
     apiService.get$<KeycloakLookupResult>(`/User/keycloak/lookup?email=${encodeURIComponent(email)}`),
 };

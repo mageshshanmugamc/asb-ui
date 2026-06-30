@@ -1,26 +1,20 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { forkJoin } from "rxjs";
-import * as signalR from "@microsoft/signalr";
 import DataGrid, { Column, ServerQueryParams } from "../../datagrid/DataGrid";
 import MultiSelect from "../../multiselect/MultiSelect";
 import { userService, UserGroupModel } from "../../../services/user.service";
+import { useSignalR } from "../../../hooks/useSignalR";
+import { SignalREvents } from "../../../constants/signalr-events";
+import ConfirmDialog from "../../confirm-dialog/ConfirmDialog";
 import "../dashboards/Dashboards.css";
-
-const BASE_URL = (window as any).__ENV__?.REACT_APP_BASE_URL || "http://localhost:5057";
 
 interface UserRow {
   id: number;
   username: string;
   email: string;
   userGroupNames: string;
+  actions?: string;
 }
-
-const columns: Column<UserRow>[] = [
-  { key: "id", label: "ID", widthClass: "col-id", sortKey: "Id" },
-  { key: "username", label: "Username", widthClass: "col-md", sortKey: "Username" },
-  { key: "email", label: "Email", widthClass: "col-lg", sortKey: "Email" },
-  { key: "userGroupNames", label: "Groups", widthClass: "col-md", sortable: false },
-];
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -36,9 +30,13 @@ const UserManagement: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set());
+  const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Track current query params for reloading
   const queryRef = useRef<ServerQueryParams>({ skip: 0, take: 10 });
+  const existingIdsRef = useRef<Set<number>>(new Set());
 
   const loadUsers = useCallback((params?: ServerQueryParams) => {
     const q = params ?? queryRef.current;
@@ -77,72 +75,107 @@ const UserManagement: React.FC = () => {
     return () => sub.unsubscribe();
   }, [loadUsers]);
 
-  const handleQueryChange = useCallback((params: ServerQueryParams) => {
-    loadUsers(params);
-  }, [loadUsers]);
-
-  // SignalR connection: listen for real-time "UserCreated" events
-  const connectionRef = useRef<signalR.HubConnection | null>(null);
-  const existingIdsRef = useRef<Set<number>>(new Set());
-
   // Keep track of current user IDs for diffing on SignalR events
   useEffect(() => {
     existingIdsRef.current = new Set(users.map((u) => u.id));
   }, [users]);
 
-  useEffect(() => {
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${BASE_URL}/hubs/notifications`)
-      .build();
-
-    connectionRef.current = connection;
-
-    connection.on("UserCreated", (notification: { message: string }) => {
-      console.log(notification.message);
-      const previousIds = new Set(existingIdsRef.current);
-      // Reload current page and highlight the new ones
-      const q = queryRef.current;
-      forkJoin({
-        usersPage: userService.getAll$(q),
-        groups: userService.getGroups$(),
-      }).subscribe({
-        next: ({ usersPage, groups: freshGroups }) => {
-          const gMap = new Map(freshGroups.map((g) => [g.id, g.groupName]));
-          setGroups(freshGroups);
-          setTotalCount(usersPage.totalCount);
-          const rows: UserRow[] = usersPage.items.map((u) => ({
-            id: u.id,
-            username: u.username,
-            email: u.email,
-            userGroupNames: u.userGroupIds.length > 0
-              ? u.userGroupIds.map((gid) => gMap.get(gid) ?? String(gid)).join(", ")
-              : "—",
-          }));
-          setUsers(rows);
-
-          // Find newly added IDs
-          const newIds = usersPage.items
-            .map((u) => u.id)
-            .filter((id) => !previousIds.has(id));
-
-          if (newIds.length > 0) {
-            setHighlightedIds(new Set(newIds));
-            setTimeout(() => setHighlightedIds(new Set()), 3000);
-          }
-        },
-      });
-    });
-
-    connection.start().catch((err) =>
-      console.error("SignalR connection failed:", err)
-    );
-
-    return () => {
-      if (connection.state === signalR.HubConnectionState.Connected) {
-        connection.stop();
-      }
-    };
+  const handleQueryChange = useCallback((params: ServerQueryParams) => {
+    loadUsers(params);
   }, [loadUsers]);
+
+  const handleDeleteClick = (row: UserRow) => {
+    setDeleteTarget(row);
+    setDeleteError(null);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    userService.delete$(deleteTarget.id).subscribe({
+      next: () => {
+        setDeleting(false);
+        setDeleteTarget(null);
+        loadUsers();
+      },
+      error: (err) => {
+        setDeleting(false);
+        setDeleteError(err.message);
+      },
+    });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteTarget(null);
+    setDeleteError(null);
+  };
+
+  const columns: Column<UserRow>[] = [
+    { key: "id", label: "ID", widthClass: "col-id", sortKey: "Id" },
+    { key: "username", label: "Username", widthClass: "col-md", sortKey: "Username" },
+    { key: "email", label: "Email", widthClass: "col-lg", sortKey: "Email" },
+    { key: "userGroupNames", label: "Groups", widthClass: "col-md", sortable: false },
+    {
+      key: "actions",
+      label: "Actions",
+      widthClass: "col-sm",
+      sortable: false,
+      render: (_value, row) => (
+        <button
+          className="btn-danger"
+          onClick={() => handleDeleteClick(row)}
+        >
+          Delete
+        </button>
+      ),
+    },
+  ];
+
+  // SignalR: listen for real-time user events
+  useSignalR("/hubs/notifications", [
+    {
+      name: SignalREvents.UserCreated,
+      handler: () => {
+        const previousIds = new Set(existingIdsRef.current);
+        const q = queryRef.current;
+        forkJoin({
+          usersPage: userService.getAll$(q),
+          groups: userService.getGroups$(),
+        }).subscribe({
+          next: ({ usersPage, groups: freshGroups }) => {
+            const gMap = new Map(freshGroups.map((g) => [g.id, g.groupName]));
+            setGroups(freshGroups);
+            setTotalCount(usersPage.totalCount);
+            const rows: UserRow[] = usersPage.items.map((u) => ({
+              id: u.id,
+              username: u.username,
+              email: u.email,
+              userGroupNames: u.userGroupIds.length > 0
+                ? u.userGroupIds.map((gid) => gMap.get(gid) ?? String(gid)).join(", ")
+                : "—",
+            }));
+            setUsers(rows);
+
+            const newIds = usersPage.items
+              .map((u) => u.id)
+              .filter((id) => !previousIds.has(id));
+
+            if (newIds.length > 0) {
+              setHighlightedIds(new Set(newIds));
+              setTimeout(() => setHighlightedIds(new Set()), 3000);
+            }
+          },
+        });
+      },
+    },
+    {
+      name: SignalREvents.UserDeleted,
+      handler: () => {
+        loadUsers();
+      },
+    },
+  ]);
 
   const handleOpenModal = () => {
     setFormData({ username: "", email: "" });
@@ -253,6 +286,19 @@ const UserManagement: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Delete User"
+          message={<>Are you sure you want to delete <strong>{deleteTarget.username}</strong>?</>}
+          confirmLabel="Delete"
+          confirmingLabel="Deleting..."
+          confirming={deleting}
+          error={deleteError}
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
       )}
     </div>
   );

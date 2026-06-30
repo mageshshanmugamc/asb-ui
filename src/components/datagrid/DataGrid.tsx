@@ -50,6 +50,15 @@ function DataGrid<T extends Record<string, any>>({
     setCurrentPage(1);
   }, [searchTerm]);
 
+  // If current page exceeds total pages (e.g. after deletion), go to last valid page
+  useEffect(() => {
+    if (!isServerSide) return;
+    const maxPage = Math.max(1, Math.ceil(totalCount / pageSize));
+    if (currentPage > maxPage) {
+      setCurrentPage(maxPage);
+    }
+  }, [totalCount, pageSize, currentPage, isServerSide]);
+
   // Notify parent when page or sort changes (server-side mode)
   useEffect(() => {
     if (!isServerSide) return;
